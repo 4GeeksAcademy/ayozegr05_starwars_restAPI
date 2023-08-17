@@ -9,6 +9,9 @@ class CustomCharactersModelView(ModelView):
 class CustomPlanetsModelView(ModelView):
     column_list = ['id', 'name', 'orbital_period', 'rotation_period', 'diameter', 'gravity', 'climate', 'terrain', 'surface_water', 'population']
 
+class CustomUsersModelView(ModelView):
+    column_list = ['id', 'email', 'is_active']
+
 def setup_admin(app):
     app.secret_key = os.environ.get('FLASK_APP_KEY', 'sample key')
     app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
@@ -16,7 +19,7 @@ def setup_admin(app):
 
     
     # Add your models here, for example this is how we add a the User model to the admin
-    admin.add_view(ModelView(User, db.session))
+    admin.add_view(CustomUsersModelView(User, db.session))
     admin.add_view(CustomPlanetsModelView(Planets, db.session))
     admin.add_view(CustomCharactersModelView(Characters, db.session))
     # admin.add_view(ModelView(StarShips, db.session))

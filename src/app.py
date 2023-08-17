@@ -36,15 +36,105 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-@app.route('/user', methods=['GET'])
-def handle_hello():
-
-    response_body = {
-        "msg": "Hello, this is your GET /user response "
+@app.route("/users", methods=["GET"])
+def get_users():
+    users = User.query.all()
+    user_list = [user.serialize() for user in users]
+    response = {
+        "status": "ok",
+        "users": user_list
     }
+    return jsonify(response)
 
-    return jsonify(response_body), 200
 
+@app.route("/users/<int:user_id>", methods=["GET"])
+def get_user_single(user_id):
+    user = User.query.get(user_id)
+    return jsonify(user.serialize()), 200
+    
+
+@app.route("/users/<int:user_id>/favorites", methods=["GET"])
+def get_user_favorites(user_id):
+    user = User.query.get(user_id)
+    
+    if user:
+        favorites_list = [favorite.serialize() for favorite in user.favorites]
+        response = {
+            "status": "ok",
+            "favorites": favorites_list
+        }
+        return jsonify(response)
+    else:
+        return "Usuario no encontrado", 404
+    
+@app.route('/users/<int:user_id>/favorites/planet/<int:planet_id>', methods=['POST'])
+def add_planet_favorite(user_id, planet_id):
+    user = User.query.get(user_id)
+    planet = Planets.query.get(planet_id)
+    
+    if user and planet:
+        # Verificar si ya existe un favorito con la combinación user_id y id_planet
+        existing_favorite = Favorites.query.filter_by(user_id=user_id, element_id=planet_id).first()
+
+        if existing_favorite:
+            return "Planet is already in favorites", 400
+
+    
+        new_favorite = Favorites(user_id=user_id, element_id=planet_id, element_type='Planet', element_name=planet.name)
+        db.session.add(new_favorite)
+        db.session.commit()
+        return "Planet added to favorites successfully", 201
+    else:
+        return "User or planet not found", 404
+    
+
+@app.route('/users/<int:user_id>/favorites/planet/<int:planet_id>', methods = ['DELETE'])
+def remove_planet_favorite(user_id, planet_id):
+    user = User.query.get(user_id)
+    planet = Planets.query.get(planet_id)
+    
+    if user and planet:
+        favorite_to_remove = Favorites.query.filter_by(user_id=user_id, element_id=planet_id, element_type='Planet').first()
+        if favorite_to_remove:
+            db.session.delete(favorite_to_remove)
+            db.session.commit()
+            return "Planet removed from favorites successfully", 200
+        else:
+            return "Planet is not in user's favorites", 404
+    else:
+        return "User or planet not found", 404
+
+
+@app.route('/users/<int:user_id>/favorites/people/<int:id_character>', methods=['POST'])
+def add_people_favorites(user_id, id_character):
+    user = User.query.get(user_id)
+    person = Characters.query.get(id_character)
+
+    if user and person:
+        # Verificar si ya existe un favorito con la combinación user_id y id_character
+        existing_favorite = Favorites.query.filter_by(user_id=user_id, element_id=id_character).first()
+
+        if existing_favorite:
+            return "Character is already in favorites", 400
+
+        new_person_favorite = Favorites(user_id=user_id, element_type="Character", element_id=id_character, element_name=person.name)
+        db.session.add(new_person_favorite)
+        db.session.commit()
+        return "Character added successfully", 200
+    else:
+        return "User or character not found", 404
+    
+@app.route('/users/<int:user_id>/favorites/people/<int:id_character>', methods=['DELETE'])
+def delete_planet_favorite(user_id, id_character):
+    favorite = Favorites.query.filter_by(user_id=user_id, element_id=id_character, element_type='Character').first()
+    
+    if favorite:
+        db.session.delete(favorite)
+        db.session.commit()
+        return "Person removed from favorites successfully", 200
+    else:
+        return "Person not found in user's favorites", 404
+    
 
 # @app.route("/products", methods = ["GET"])
 # def get_product ():

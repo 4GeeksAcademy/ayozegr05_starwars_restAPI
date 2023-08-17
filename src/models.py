@@ -8,10 +8,11 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(80), unique=False, nullable=False)
     is_active = db.Column(db.Boolean(), unique=False, nullable=False)
+    favorites = db.relationship("Favorites", backref="user")
     # users_favorite_planets = db.relationship('Planets', secondary = favorites)
 
     def __repr__(self):
-        return '<User %r>' % self.username
+        return '<User %r>' % self.id
 
     def serialize(self):
         return {
@@ -103,10 +104,11 @@ class Characters(db.Model):
     
 class Favorites(db.Model):
     __tablename__ = 'favorites'
-    id = db.Column(db.Integer, primary_key=True)
-    users_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    characters_id = db.Column(db.Integer, db.ForeignKey('characters.id'))
-    planets_id = db.Column(db.Integer, db.ForeignKey('planets.id'))
+    id = db.Column(db.Integer, primary_key=True) 
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    element_id = db.Column(db.Integer)  # ID del personaje o planeta favorito
+    element_type = db.Column(db.String(50))  # "character" o "planet"
+    element_name = db.Column(db.String(50))  # Nombre del elemento favorito
   
     def __repr__(self):
         return '<Favorites %r>' % self.id
@@ -114,9 +116,11 @@ class Favorites(db.Model):
     def serialize(self):
         return {
             "id": self.id,
-            "users_id": self.users_id,
-            "characters": self.characters_id,
-            "planets": self.planets_id,
+            "user_id": self.user_id,
+            "element_id": self.element_id,
+            "element_type": self.element_type, 
+            "element_name": self.element_name,
             # do not serialize the password, its a security breach
         }
+
     
